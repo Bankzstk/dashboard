@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPLD CPLI - Talent Dashboard (GitHub)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #1F4E78;
+  --primary-light: #2B6CB0;
+  --accent: #ED8936;
+  --bg: #F7FAFC;
+  --card-bg: #FFFFFF;
+  --text: #2D3748;
+  --text-light: #718096;
+  --border: #E2E8F0;
+  --success: #48BB78;
+  --danger: #F56565;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 32px;
+  text-align: center;
+}
+
+.header h1 { font-size: 28px; margin-bottom: 8px; font-weight: 700; }
+.header p { font-size: 14px; opacity: 0.9; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+input, select {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  flex: 1;
+  min-width: 150px;
+  font-family: inherit;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  flex: 0 0 auto;
+}
+
+.btn-primary:hover { background: var(--primary-light); }
+
+.btn-edit {
+  background: var(--accent);
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-edit:hover { background: #DC7713; }
+
+.btn-delete {
+  background: var(--danger);
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-delete:hover { background: #E53E3E; }
+
+.status {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: none;
+}
+
+.status.show { display: block; }
+
+.status.success {
+  background: #C6F6D5;
+  color: #22543D;
+  border-left: 4px solid var(--success);
+}
+
+.status.error {
+  background: #FED7D7;
+  color: #9B2C2C;
+  border-left: 4px solid var(--danger);
+}
+
+.status.loading {
+  background: #BEE3F8;
+  color: #2C5282;
+  border-left: 4px solid var(--primary);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 4px solid var(--primary);
+  transition: all 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.tag {
+  background: #EBF4FF;
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.card-content {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin: 12px 0;
+}
+
+.card-content div {
+  margin: 6px 0;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.card-actions .btn { flex: 1; }
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-save {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  padding: 10px;
+}
+
+.btn-save:hover { background: var(--primary-light); }
+
+.btn-cancel {
+  flex: 1;
+  background: var(--border);
+  color: var(--text);
+  padding: 10px;
+}
+
+.btn-cancel:hover { background: #CBD5E0; }
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  grid-column: 1 / -1;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .controls {
+    flex-direction: column;
+  }
+  input, select {
+    min-width: auto;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 SPLD CPLI - Talent Profile Dashboard</h1>
+  <p>GitHub-Synced Real-time Employee Management</p>
+</div>
+
+<div class="container">
+  <div id="statusMsg" class="status"></div>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="ค้นหาชื่อ หรือ ID...">
+    <select id="filterGroup">
+      <option value="">ทุก Group</option>
+    </select>
+    <select id="filterRole">
+      <option value="">ทุก Role</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddModal()">+ เพิ่มใหม่</button>
+    <button class="btn btn-primary" onclick="syncFromGithub()" style="background: var(--success);">🔄 Sync</button>
+  </div>
+
+  <div class="cards" id="cardsContainer"></div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">แก้ไขข้อมูล</h2>
+    <form id="editForm">
+      <div class="form-group">
+        <label>รหัสพนักงาน *</label>
+        <input type="text" id="form_emp_id" required>
+      </div>
+      <div class="form-group">
+        <label>ชื่อ *</label>
+        <input type="text" id="form_first_name" required>
+      </div>
+      <div class="form-group">
+        <label>นามสกุล *</label>
+        <input type="text" id="form_last_name" required>
+      </div>
+      <div class="form-group">
+        <label>ปี</label>
+        <input type="number" id="form_year">
+      </div>
+      <div class="form-group">
+        <label>Group</label>
+        <select id="form_group"></select>
+      </div>
+      <div class="form-group">
+        <label>Sub Group</label>
+        <input type="text" id="form_sub_group">
+      </div>
+      <div class="form-group">
+        <label>Program</label>
+        <input type="text" id="form_program">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="form_role">
+      </div>
+      <div class="form-group">
+        <label>Performance</label>
+        <select id="form_performance">
+          <option value="">-- เลือก --</option>
+          <option value="H">H (High)</option>
+          <option value="M">M (Medium)</option>
+          <option value="L">L (Low)</option>
+          <option value="Pass">Pass</option>
+          <option value="Not Pass">Not Pass</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Remark</label>
+        <input type="text" id="form_remark">
+      </div>
+      <div class="form-buttons">
+        <button type="button" class="btn btn-save" onclick="saveRecord()">💾 บันทึก</button>
+        <button type="button" class="btn btn-cancel" onclick="closeModal()">ยกเลิก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const GITHUB_USER = 'Bankzstk';
+const GITHUB_REPO = 'dashboard';
+const GITHUB_TOKEN = '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';
+const CSV_FILE = 'data.csv';
+
+let allData = [];
+let filtered = [];
+let currentEditIndex = null;
+
+const statusMsg = document.getElementById('statusMsg');
+
+function showStatus(message, type) {
+  statusMsg.textContent = (type === 'loading' ? '⏳ ' : type === 'success' ? '✅ ' : '❌ ') + message;
+  statusMsg.className = 'status show ' + type;
+  if (type !== 'loading') {
+    setTimeout(() => statusMsg.classList.remove('show'), 3000);
+  }
+}
+
+async function fetchFromGithub() {
+  try {
+    showStatus('กำลังดึงข้อมูล...', 'loading');
+    const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${CSV_FILE}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const csvContent = atob(data.content);
+    parseCSV(csvContent);
+    showStatus('ดึงข้อมูลสำเร็จ', 'success');
+  } catch (e) {
+    showStatus('ไม่สามารถดึงข้อมูล: ' + e.message, 'error');
+  }
+}
+
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  allData = lines.slice(1)
+    .filter(line => line.trim())
+    .map(line => {
+      const values = line.split(',').map(v => v.trim());
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h] = values[i] || '';
+      });
+      return obj;
+    });
+  
+  populateFilters();
+  applyFilters();
+}
+
+function populateFilters() {
+  const groups = [...new Set(allData.map(r => r.Group).filter(Boolean))].sort();
+  const roles = [...new Set(allData.map(r => r.Role).filter(Boolean))].sort();
+  
+  const groupSelect = document.getElementById('filterGroup');
+  const formGroupSelect = document.getElementById('form_group');
+  
+  [groupSelect, formGroupSelect].forEach(sel => {
+    sel.innerHTML = '<option value="">-- เลือก --</option>';
+    groups.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g;
+      opt.textContent = g;
+      sel.appendChild(opt);
+    });
+  });
+
+  const roleSelect = document.getElementById('filterRole');
+  roleSelect.innerHTML = '<option value="">ทุก Role</option>';
+  roles.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    roleSelect.appendChild(opt);
+  });
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const group = document.getElementById('filterGroup').value;
+  const role = document.getElementById('filterRole').value;
+
+  filtered = allData.filter(r => {
+    const search = [r['Emp ID'], r['First Name'], r['Last Name']].join(' ').toLowerCase();
+    if (q && !search.includes(q)) return false;
+    if (group && r.Group !== group) return false;
+    if (role && r.Role !== role) return false;
+    return true;
+  });
+
+  renderCards();
+}
+
+function renderCards() {
+  const container = document.getElementById('cardsContainer');
+  
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-results"><h3>ไม่พบข้อมูล</h3></div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map((r, i) => {
+    const actualIndex = allData.indexOf(r);
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${r['First Name']} ${r['Last Name']}</div>
+            <div class="card-subtitle">ID: ${r['Emp ID']}</div>
+          </div>
+        </div>
+        <div class="card-tags">
+          ${r.Group ? `<span class="tag">${r.Group}</span>` : ''}
+          ${r.Program ? `<span class="tag">${r.Program}</span>` : ''}
+          ${r.Year ? `<span class="tag">${r.Year}</span>` : ''}
+          ${r.Performance ? `<span class="tag">${r.Performance}</span>` : ''}
+        </div>
+        <div class="card-content">
+          ${r.Role ? `<div><b>Role:</b> ${r.Role}</div>` : ''}
+          ${r['Sub Group'] ? `<div><b>Sub Group:</b> ${r['Sub Group']}</div>` : ''}
+          ${r.Remark ? `<div><b>Remark:</b> ${r.Remark}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-edit" onclick="openEditModal(${actualIndex})">แก้ไข</button>
+          <button class="btn btn-delete" onclick="deleteRecord(${actualIndex})">ลบ</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openEditModal(index) {
+  currentEditIndex = index;
+  const r = allData[index];
+  document.getElementById('modalTitle').textContent = 'แก้ไข: ' + r['First Name'] + ' ' + r['Last Name'];
+  document.getElementById('form_emp_id').value = r['Emp ID'];
+  document.getElementById('form_first_name').value = r['First Name'];
+  document.getElementById('form_last_name').value = r['Last Name'];
+  document.getElementById('form_year').value = r.Year || '';
+  document.getElementById('form_group').value = r.Group || '';
+  document.getElementById('form_sub_group').value = r['Sub Group'] || '';
+  document.getElementById('form_program').value = r.Program || '';
+  document.getElementById('form_role').value = r.Role || '';
+  document.getElementById('form_performance').value = r.Performance || '';
+  document.getElementById('form_remark').value = r.Remark || '';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function openAddModal() {
+  currentEditIndex = null;
+  document.getElementById('modalTitle').textContent = 'เพิ่มข้อมูลใหม่';
+  document.getElementById('editForm').reset();
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+async function saveRecord() {
+  const record = {
+    'Emp ID': document.getElementById('form_emp_id').value,
+    'First Name': document.getElementById('form_first_name').value,
+    'Last Name': document.getElementById('form_last_name').value,
+    'Year': document.getElementById('form_year').value,
+    'Group': document.getElementById('form_group').value,
+    'Sub Group': document.getElementById('form_sub_group').value,
+    'Program': document.getElementById('form_program').value,
+    'Role': document.getElementById('form_role').value,
+    'Performance': document.getElementById('form_performance').value,
+    'Action': currentEditIndex === null ? 'New' : 'Update',
+    'Remark': document.getElementById('form_remark').value
+  };
+
+  if (!record['Emp ID'] || !record['First Name'] || !record['Last Name']) {
+    showStatus('กรุณากรอกฟิลด์ที่ต้องการ', 'error');
+    return;
+  }
+
+  showStatus('กำลังบันทึก...', 'loading');
+
+  if (currentEditIndex === null) {
+    allData.push(record);
+  } else {
+    allData[currentEditIndex] = record;
+  }
+
+  await saveToGithub();
+  closeModal();
+  applyFilters();
+}
+
+async function deleteRecord(index) {
+  if (!confirm('ยืนยันการลบ?')) return;
+  
+  showStatus('กำลังลบ...', 'loading');
+  allData.splice(index, 1);
+  await saveToGithub();
+  applyFilters();
+}
+
+async function saveToGithub() {
+  try {
+    const headers = ['Emp ID', 'First Name', 'Last Name', 'Year', 'Group', 'Sub Group', 'Program', 'Role', 'Performance', 'Action', 'Remark'];
+    let csv = headers.join(',') + '\n';
+    allData.forEach(r => {
+      csv += headers.map(h => `"${r[h] || ''}"`).join(',') + '\n';
+    });
+
+    const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${CSV_FILE}`;
+    
+    // Get current file SHA
+    const getResp = await fetch(url, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    const fileData = await getResp.json();
+
+    // Update file
+    const updateResp = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'Update employee data',
+        content: btoa(csv),
+        sha: fileData.sha
+      })
+    });
+
+    if (updateResp.ok) {
+      showStatus('บันทึกสำเร็จ', 'success');
+    } else {
+      showStatus('ไม่สามารถบันทึก', 'error');
+    }
+  } catch (e) {
+    showStatus('Error: ' + e.message, 'error');
+  }
+}
+
+function syncFromGithub() {
+  fetchFromGithub();
+}
+
+// Event listeners
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('filterGroup').addEventListener('change', applyFilters);
+document.getElementById('filterRole').addEventListener('change', applyFilters);
+
+// Load data on startup
+fetchFromGithub();
+</script>
+
+</body>
+</html>
