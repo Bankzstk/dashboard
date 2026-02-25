@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPLD & CPLI - Talent Profile Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#1a365d;--primary-light:#2b6cb0;--accent:#ed8936;--accent2:#48bb78;--bg:#f7fafc;--card-bg:#fff;--text:#2d3748;--text-light:#718096;--border:#e2e8f0;--shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06)}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.header h1{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.header .stats{display:flex;gap:24px;flex-wrap:wrap}
+.stat-box{text-align:center;background:rgba(255,255,255,.15);border-radius:10px;padding:8px 20px}
+.stat-box .num{font-size:28px;font-weight:800}
+.stat-box .label{font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:1px}
+.controls{padding:20px 32px;background:#fff;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.search-box{position:relative;flex:1;min-width:280px}
+.search-box input{width:100%;padding:12px 16px 12px 44px;border:2px solid var(--border);border-radius:10px;font-size:15px;transition:border .2s}
+.search-box input:focus{outline:none;border-color:var(--primary-light)}
+.search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-light)}
+select{padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;background:#fff;cursor:pointer;min-width:130px}
+select:focus{outline:none;border-color:var(--primary-light)}
+.btn{padding:10px 20px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-success{background:var(--accent2);color:#fff}
+.btn-success:hover{background:#38a169}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text-light)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.status{padding:12px 16px;border-radius:8px;margin:0 32px 16px;font-size:14px;display:none}
+.status.show{display:block}
+.status.success{background:#c6f6d5;color:#22543d;border-left:4px solid var(--accent2)}
+.status.error{background:#fed7d7;color:#9b2c2c;border-left:4px solid #f56565}
+.main{padding:24px 32px;display:flex;gap:24px;min-height:calc(100vh - 200px)}
+.results-panel{flex:1;min-width:0}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.results-header span{font-size:14px;color:var(--text-light)}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.emp-card{background:var(--card-bg);border-radius:14px;padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:all .25s;border:2px solid transparent;position:relative;overflow:hidden}
+.emp-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px -5px rgba(0,0,0,.15);border-color:var(--primary-light)}
+.emp-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(237,137,54,.2)}
+.emp-card-header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
+.avatar-cpli{background:linear-gradient(135deg,#667eea,#764ba2)}
+.avatar-spld{background:linear-gradient(135deg,#f093fb,#f5576c)}
+.avatar-cpg{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.emp-name{font-size:17px;font-weight:700;color:var(--primary)}
+.emp-id{font-size:12px;color:var(--text-light)}
+.emp-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.tag-group{background:#ebf4ff;color:#2b6cb0}
+.tag-role{background:#f0fff4;color:#276749}
+.tag-year{background:#fefcbf;color:#975a16}
+.profile-panel{width:480px;background:var(--card-bg);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;position:sticky;top:24px;max-height:calc(100vh - 80px);overflow-y:auto;display:none}
+.profile-panel.show{display:block}
+.profile-head{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:28px 24px;text-align:center;position:relative}
+.profile-head .close-btn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.profile-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;border:3px solid rgba(255,255,255,.4)}
+.profile-name{font-size:22px;font-weight:700}
+.profile-subtitle{font-size:13px;opacity:.85;margin-top:4px}
+.profile-body{padding:20px 24px}
+.profile-section{margin-bottom:20px}
+.profile-section h3{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-light);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-item{padding:8px 12px;background:#f7fafc;border-radius:8px}
+.info-item .label{font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px}
+.info-item .value{font-size:14px;font-weight:600;color:var(--text);margin-top:2px}
+.project-timeline{position:relative}
+.project-entry{position:relative;padding:14px 16px;background:#f7fafc;border-radius:10px;margin-bottom:10px;border-left:4px solid var(--primary-light)}
+.project-entry .proj-year{font-size:12px;font-weight:700;color:var(--accent)}
+.project-entry .proj-name{font-size:14px;font-weight:600;color:var(--text);margin:4px 0}
+.project-entry .proj-details{font-size:12px;color:var(--text-light);display:flex;flex-wrap:wrap;gap:8px}
+.no-results{text-align:center;padding:60px 20px;color:var(--text-light)}
+.pagination{display:flex;justify-content:center;gap:8px;margin-top:24px;flex-wrap:wrap}
+.page-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:13px}
+.page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page-btn:hover:not(.active){background:#edf2f7}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-content{background:var(--card-bg);border-radius:14px;padding:32px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h2{margin-bottom:20px;color:var(--primary)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-weight:600;margin-bottom:6px;font-size:13px;color:var(--primary)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(43,108,176,.1)}
+.form-buttons{display:flex;gap:12px;margin-top:24px}
+.btn-save{flex:1;background:var(--primary);color:#fff}
+.btn-save:hover{background:var(--primary-light)}
+.btn-cancel{flex:1;background:var(--border);color:var(--text)}
+.btn-cancel:hover{background:#cbd5e0}
+.btn-delete{flex:1;background:#f56565;color:#fff}
+.btn-delete:hover{background:#e53e3e}
+@media(max-width:900px){.main{flex-direction:column}.profile-panel{width:100%;position:static;max-height:none}.results-grid{grid-template-columns:1fr}.controls{padding:16px}.header{padding:16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>SPLD & CPLI Talent Profile Dashboard</h1>
+    <div style="font-size:13px;opacity:.8;margin-top:4px">Strategic People & Leadership Development</div>
+  </div>
+  <div class="status" id="statusMsg"></div>
+  <div class="stats">
+    <div class="stat-box"><div class="num" id="statEmp">-</div><div class="label">Employees</div></div>
+    <div class="stat-box"><div class="num" id="statProj">-</div><div class="label">Records</div></div>
+    <div class="stat-box"><div class="num" id="statProg">-</div><div class="label">Programs</div></div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search-box">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="ค้นหาชื่อ, นามสกุล, รหัสพนักงาน...">
+  </div>
+  <select id="filterGroup"><option value="">ทุก Group</option></select>
+  <select id="filterSubGroup"><option value="">ทุก Sub Group</option></select>
+  <select id="filterProgram"><option value="">ทุก Program</option></select>
+  <select id="filterYear"><option value="">ทุกปี</option></select>
+  <select id="filterRole"><option value="">ทุก Role</option></select>
+  <button class="btn btn-outline" onclick="resetFilters()">Reset</button>
+  <button class="btn btn-primary" onclick="openAddModal()">+ เพิ่มใหม่</button>
+  <button class="btn btn-success" onclick="syncGithub()">🔄 Sync</button>
+</div>
+
+<div class="main">
+  <div class="results-panel">
+    <div class="results-header">
+      <span id="resultCount">กำลังโหลด...</span>
+    </div>
+    <div class="results-grid" id="resultsGrid"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+  <div class="profile-panel" id="profilePanel">
+    <div class="profile-head">
+      <button class="close-btn" onclick="closeProfile()">&times;</button>
+      <div class="profile-avatar" id="profileAvatar"></div>
+      <div class="profile-name" id="profileName"></div>
+      <div class="profile-subtitle" id="profileSub"></div>
+    </div>
+    <div class="profile-body" id="profileBody"></div>
+  </div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">แก้ไขข้อมูล</h2>
+    <form id="editForm">
+      <div class="form-group">
+        <label>รหัสพนักงาน</label>
+        <input type="text" id="form_emp_id" required>
+      </div>
+      <div class="form-group">
+        <label>ชื่อ</label>
+        <input type="text" id="form_first_name" required>
+      </div>
+      <div class="form-group">
+        <label>นามสกุล</label>
+        <input type="text" id="form_last_name" required>
+      </div>
+      <div class="form-group">
+        <label>ปี</label>
+        <input type="number" id="form_year">
+      </div>
+      <div class="form-group">
+        <label>Group</label>
+        <select id="form_group"></select>
+      </div>
+      <div class="form-group">
+        <label>Sub Group</label>
+        <input type="text" id="form_sub_group">
+      </div>
+      <div class="form-group">
+        <label>Program</label>
+        <input type="text" id="form_program">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="form_role">
+      </div>
+      <div class="form-group">
+        <label>Performance</label>
+        <select id="form_performance">
+          <option value="">-- เลือก --</option>
+          <option value="H">H (High)</option>
+          <option value="M">M (Medium)</option>
+          <option value="L">L (Low)</option>
+          <option value="Pass">Pass</option>
+          <option value="Not Pass">Not Pass</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Remark</label>
+        <textarea id="form_remark" rows="3"></textarea>
+      </div>
+      <div class="form-buttons">
+        <button type="button" class="btn btn-save" onclick="saveRecord()">💾 บันทึก</button>
+        <button type="button" class="btn btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button type="button" class="btn btn-delete" id="deleteBtn" style="display:none" onclick="deleteRecord()">🗑️ ลบ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const GITHUB_USER = 'Bankzstk';
+const GITHUB_REPO = 'dashboard';
+const GITHUB_TOKEN = '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';
+const CSV_FILE = 'data.csv';
+const PAGE_SIZE = 30;
+
+let EMPLOYEES = [];
+let FILTERS = { groups: [], subGroups: [], programs: [], roles: [], years: [] };
+let currentPage = 1;
+let filtered = [];
+let selectedEmpId = null;
+let currentEditIndex = null;
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = (type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : '⏳ ') + msg;
+  el.className = 'status show ' + type;
+  if (type !== 'loading') setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function loadFromGithub() {
+  try {
+    showStatus('กำลังดึงข้อมูล...', 'loading');
+    const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${CSV_FILE}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const csv = atob(data.content);
+    parseCSV(csv);
+    showStatus('ดึงข้อมูลสำเร็จ', 'success');
+  } catch (e) {
+    showStatus('ไม่สามารถดึงข้อมูล', 'error');
+  }
+}
+
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  EMPLOYEES = lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+
+  buildFilters();
+  applyFilters();
+}
+
+function buildFilters() {
+  FILTERS.groups = [...new Set(EMPLOYEES.map(e => e.Group).filter(Boolean))].sort();
+  FILTERS.subGroups = [...new Set(EMPLOYEES.map(e => e['Sub Group']).filter(Boolean))].sort();
+  FILTERS.programs = [...new Set(EMPLOYEES.map(e => e.Program).filter(Boolean))].sort();
+  FILTERS.roles = [...new Set(EMPLOYEES.map(e => e.Role).filter(Boolean))].sort();
+  FILTERS.years = [...new Set(EMPLOYEES.map(e => e.Year).filter(Boolean))].sort((a,b) => b-a);
+
+  document.getElementById('statEmp').textContent = EMPLOYEES.length.toLocaleString();
+  document.getElementById('statProj').textContent = EMPLOYEES.length.toLocaleString();
+  document.getElementById('statProg').textContent = FILTERS.programs.length;
+
+  ['filterGroup','filterSubGroup','filterProgram','filterYear','filterRole'].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    const opts = [FILTERS.groups, FILTERS.subGroups, FILTERS.programs, FILTERS.years, FILTERS.roles];
+    sel.innerHTML = '<option value="">-- เลือก --</option>';
+    opts[i].forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      sel.appendChild(o);
+    });
+  });
+
+  const formGroup = document.getElementById('form_group');
+  formGroup.innerHTML = '<option value="">-- เลือก --</option>';
+  FILTERS.groups.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g;
+    o.textContent = g;
+    formGroup.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const group = document.getElementById('filterGroup').value;
+  const sub = document.getElementById('filterSubGroup').value;
+  const prog = document.getElementById('filterProgram').value;
+  const year = document.getElementById('filterYear').value;
+  const role = document.getElementById('filterRole').value;
+
+  filtered = EMPLOYEES.filter(e => {
+    if (q) {
+      const s = [e['Emp ID'], e['First Name'], e['Last Name']].join(' ').toLowerCase();
+      if (!s.includes(q)) return false;
+    }
+    if (group && e.Group !== group) return false;
+    if (sub && e['Sub Group'] !== sub) return false;
+    if (prog && e.Program !== prog) return false;
+    if (year && e.Year !== year) return false;
+    if (role && e.Role !== role) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  renderResults();
+}
+
+function renderResults() {
+  const grid = document.getElementById('resultsGrid');
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('resultCount').textContent = `พบ ${filtered.length.toLocaleString()} คน`;
+
+  if (!pageItems.length) {
+    grid.innerHTML = '<div class="no-results"><h3>ไม่พบข้อมูล</h3></div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  grid.innerHTML = pageItems.map(e => {
+    const group = e.Group || 'CPLI';
+    const ac = group.includes('SPLD') ? 'avatar-spld' : group.includes('CPG') ? 'avatar-cpg' : 'avatar-cpli';
+    const initials = (e['First Name']?.[0]||'') + (e['Last Name']?.[0]||'');
+    return `<div class="emp-card ${selectedEmpId===e['Emp ID']?'active':''}" onclick="showProfile('${e['Emp ID']}')">
+      <div class="emp-card-header">
+        <div class="avatar ${ac}">${initials}</div>
+        <div>
+          <div class="emp-name">${e['First Name']} ${e['Last Name']}</div>
+          <div class="emp-id">ID: ${e['Emp ID']}</div>
+        </div>
+      </div>
+      <div class="emp-meta">
+        ${e.Group ? `<span class="tag tag-group">${e.Group}</span>` : ''}
+        ${e.Role ? `<span class="tag tag-role">${e.Role}</span>` : ''}
+        ${e.Year ? `<span class="tag tag-year">${e.Year}</span>` : ''}
+      </div>
+      <div>${e.Program || e['Sub Group'] || ''}</div>
+    </div>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PAGE_SIZE);
+  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = '';
+  const s = Math.max(1, currentPage - 3);
+  const e = Math.min(total, currentPage + 3);
+  if (s > 1) html += `<button class="page-btn" onclick="goPage(1)">1</button>`;
+  if (s > 2) html += `<span style="padding:8px">...</span>`;
+  for (let i = s; i <= e; i++) {
+    html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  if (e < total-1) html += `<span style="padding:8px">...</span>`;
+  if (e < total) html += `<button class="page-btn" onclick="goPage(${total})">${total}</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) { currentPage = p; renderResults(); }
+
+function showProfile(empId) {
+  selectedEmpId = empId;
+  const e = EMPLOYEES.find(x => x['Emp ID'] === empId);
+  if (!e) return;
+
+  const panel = document.getElementById('profilePanel');
+  panel.classList.add('show');
+
+  const group = e.Group || 'CPLI';
+  const ac = group.includes('SPLD') ? 'avatar-spld' : group.includes('CPG') ? 'avatar-cpg' : 'avatar-cpli';
+  const initials = (e['First Name']?.[0]||'') + (e['Last Name']?.[0]||'');
+
+  document.getElementById('profileAvatar').className = 'profile-avatar ' + ac;
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent = `${e['First Name']} ${e['Last Name']}`;
+  document.getElementById('profileSub').textContent = `ID: ${e['Emp ID']}`;
+
+  let body = `<div class="profile-section"><h3>👤 ข้อมูลพื้นฐาน</h3><div class="info-grid">`;
+  const fields = [['รหัส', e['Emp ID']], ['ชื่อ-สกุล', `${e['First Name']} ${e['Last Name']}`], ['ปี', e.Year], ['Group', e.Group], ['Sub Group', e['Sub Group']], ['Program', e.Program], ['Role', e.Role]];
+  fields.forEach(([l,v]) => { if (v) body += `<div class="info-item"><div class="label">${l}</div><div class="value">${v}</div></div>`; });
+  body += `</div></div>`;
+
+  if (e.Performance || e.Values || e['Final Performance']) {
+    body += `<div class="profile-section"><h3>🏆 ผลประเมิน</h3>`;
+    if (e.Performance) body += `<div style="margin:8px 0"><b>Performance:</b> ${e.Performance}</div>`;
+    if (e.Values) body += `<div style="margin:8px 0"><b>Values:</b> ${e.Values}</div>`;
+    if (e['Final Performance']) body += `<div style="margin:8px 0"><b>Final:</b> ${e['Final Performance']}</div>`;
+    body += `</div>`;
+  }
+
+  if (e['Start Date'] || e['End Date']) {
+    body += `<div class="profile-section"><h3>📅 ระยะเวลา</h3>`;
+    body += `<div style="font-size:13px;color:var(--text-light);line-height:1.8">`;
+    if (e['Start Date']) body += `<div><b>เริ่ม:</b> ${e['Start Date']}</div>`;
+    if (e['End Date']) body += `<div><b>สิ้นสุด:</b> ${e['End Date']}</div>`;
+    if (e.Period) body += `<div><b>ระยะเวลา:</b> ${e.Period}</div>`;
+    body += `</div></div>`;
+  }
+
+  if (e.Remark) {
+    body += `<div class="profile-section"><h3>📝 หมายเหตุ</h3><div style="font-size:13px;color:var(--text-light)">${e.Remark}</div></div>`;
+  }
+
+  body += `<div style="margin-top:16px"><button class="btn btn-primary" onclick="openEditModal('${e['Emp ID']}')" style="width:100%">✏️ แก้ไข</button></div>`;
+
+  document.getElementById('profileBody').innerHTML = body;
+  renderResults();
+}
+
+function closeProfile() {
+  document.getElementById('profilePanel').classList.remove('show');
+  selectedEmpId = null;
+  renderResults();
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  ['filterGroup','filterSubGroup','filterProgram','filterYear','filterRole'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  applyFilters();
+  closeProfile();
+}
+
+function openAddModal() {
+  currentEditIndex = null;
+  document.getElementById('modalTitle').textContent = 'เพิ่มข้อมูลใหม่';
+  document.getElementById('editForm').reset();
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function openEditModal(empId) {
+  const idx = EMPLOYEES.findIndex(e => e['Emp ID'] === empId);
+  if (idx === -1) return;
+  currentEditIndex = idx;
+  const e = EMPLOYEES[idx];
+  document.getElementById('modalTitle').textContent = 'แก้ไข: ' + e['First Name'] + ' ' + e['Last Name'];
+  document.getElementById('form_emp_id').value = e['Emp ID'];
+  document.getElementById('form_first_name').value = e['First Name'];
+  document.getElementById('form_last_name').value = e['Last Name'];
+  document.getElementById('form_year').value = e.Year || '';
+  document.getElementById('form_group').value = e.Group || '';
+  document.getElementById('form_sub_group').value = e['Sub Group'] || '';
+  document.getElementById('form_program').value = e.Program || '';
+  document.getElementById('form_role').value = e.Role || '';
+  document.getElementById('form_performance').value = e.Performance || '';
+  document.getElementById('form_remark').value = e.Remark || '';
+  document.getElementById('deleteBtn').style.display = 'flex';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+async function saveRecord() {
+  const rec = {
+    'Emp ID': document.getElementById('form_emp_id').value,
+    'First Name': document.getElementById('form_first_name').value,
+    'Last Name': document.getElementById('form_last_name').value,
+    'Year': document.getElementById('form_year').value,
+    'Group': document.getElementById('form_group').value,
+    'Sub Group': document.getElementById('form_sub_group').value,
+    'Program': document.getElementById('form_program').value,
+    'Role': document.getElementById('form_role').value,
+    'Performance': document.getElementById('form_performance').value,
+    'Remark': document.getElementById('form_remark').value,
+    'Batch': '', 'Project Name': '', 'Values': '', 'Final Performance': '', 'Start Date': '', 'End Date': '', 'Period': '', 'Action': ''
+  };
+
+  if (!rec['Emp ID'] || !rec['First Name'] || !rec['Last Name']) {
+    showStatus('กรุณากรอกข้อมูลที่ต้องการ', 'error');
+    return;
+  }
+
+  showStatus('กำลังบันทึก...', 'loading');
+  if (currentEditIndex === null) {
+    EMPLOYEES.push(rec);
+  } else {
+    EMPLOYEES[currentEditIndex] = rec;
+  }
+  await saveToGithub();
+  closeModal();
+  buildFilters();
+  applyFilters();
+}
+
+async function deleteRecord() {
+  if (!confirm('ยืนยันการลบ?')) return;
+  showStatus('กำลังลบ...', 'loading');
+  EMPLOYEES.splice(currentEditIndex, 1);
+  await saveToGithub();
+  closeModal();
+  buildFilters();
+  applyFilters();
+}
+
+async function saveToGithub() {
+  try {
+    const headers = Object.keys(EMPLOYEES[0] || {});
+    let csv = headers.join(',') + '\n';
+    EMPLOYEES.forEach(r => {
+      csv += headers.map(h => `"${(r[h]||'').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+
+    const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${CSV_FILE}`;
+    const get = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+    const data = await get.json();
+
+    const put = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update data', content: btoa(csv), sha: data.sha })
+    });
+
+    if (put.ok) {
+      showStatus('บันทึกสำเร็จ', 'success');
+    } else {
+      showStatus('ไม่สามารถบันทึก', 'error');
+    }
+  } catch (e) {
+    showStatus('Error: ' + e.message, 'error');
+  }
+}
+
+function syncGithub() {
+  loadFromGithub();
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+['filterGroup','filterSubGroup','filterProgram','filterYear','filterRole'].forEach(id => {
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+
+loadFromGithub();
+</script>
+</body>
+</html>
